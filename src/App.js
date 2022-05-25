@@ -5,28 +5,56 @@ function App() {
   const [loading, setLoading] = useState(false) // valor inicial "false" para a tela de loading
   const [year, setYear] = useState('')
 
-  const getCars = () => {
+  const [emailField, setEmailField] = useState('')
+  const [passwordField, setPasswordField] = useState('')
+
+  const getCars = async () => {
     setCars([]) // limpa a lista setCars e carrega novamente
     setLoading(true) // quando iniciar a requisição, vai gerar tela de loading
-    fetch(`https://api.b7web.com.br/carros/api/carros?ano=${year}`)
-      .then(function (result) {
-        // recebe o 'result' e transforma em json através de .json()
-        return result.json()
-      })
-      .then(function (json) {
-        // pega as infos armazenadas em json
-        setLoading(false) // quando tiver carregado, some a tela de loading
-        if (json.error === '') {
-          // se não tiver erro no json, armazena as infos em 'cars'
-          setCars(json.cars)
-        } else {
-          alert(json.error) // caso tenha erro, mostra na tela
-        }
-      })
+
+    // aqui começa a requisição com Async e Await
+    let result = await fetch(
+      `https://api.b7web.com.br/carros/api/carros?ano=${year}`
+    )
+    let json = await result.json()
+    // recebe o 'result' e transforma em json através de .json()
+    // pega a result.json() e atribui a json
+
+    setLoading(false) // acabou a requisição, para a tela de loading
+
+    if (json.error === '') {
+      setCars(json.cars)
+      // se não tiver erro no json, armazena as infos em 'cars'
+    } else {
+      alert(json.error)
+      // caso tenha erro, mostra na tela
+    }
   }
 
   const handleYearChange = e => {
     setYear(e.target.value) // pega o valor das opções em <option>
+  }
+
+  const handleLoginSubmit = async e => {
+    e.preventDefault()
+    // aqui começa o método POST
+    let url = 'https://api.b7web.com.br/carros/api/auth/login'
+    let result = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }, // o que será enviado
+      body: JSON.stringify({
+        email: emailField,
+        password: passwordField
+      })
+    })
+    let json = await result.json() // pega o resultado
+
+    if (json.error != '') {
+      //se o acesso for negado, é pego aqui e mostrado na tela.
+      alert(json.error)
+    }
   }
 
   useEffect(() => {
@@ -36,6 +64,31 @@ function App() {
 
   return (
     <div>
+      <h2>Faça Login:</h2>
+      <form onSubmit={handleLoginSubmit}>
+        <label>
+          E-mail:
+          <input
+            type="email"
+            value={emailField}
+            onChange={e => setEmailField(e.target.value)}
+          />
+        </label>
+        <br />
+
+        <label>
+          Senha:
+          <input
+            type="password"
+            value={passwordField}
+            onChange={e => setPasswordField(e.target.value)}
+          />
+        </label>
+        <br />
+
+        <input type="submit" value="Enviar" />
+      </form>
+
       <h1>Lista de Carros</h1>
 
       <select onChange={handleYearChange}>
