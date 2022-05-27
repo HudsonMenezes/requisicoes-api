@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react'
 
 function App() {
+  //pegando informacoes para login e armazenando no localstorage
+  const [token, setToken] = useState(localStorage.getItem('token'))
+  const [userName, setUserName] = useState(localStorage.getItem('username'))
+
   const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(false) // valor inicial "false" para a tela de loading
   const [year, setYear] = useState('')
 
   const [emailField, setEmailField] = useState('')
   const [passwordField, setPasswordField] = useState('')
+  const [rEmailField, setREmailField] = useState('')
+  const [rPasswordField, setRPasswordField] = useState('')
 
-  const [nameField, setNameField] = useState('')
+  const [rNameField, setRNameField] = useState('')
 
   const getCars = async () => {
     setCars([]) // limpa a lista setCars e carrega novamente
@@ -56,6 +62,12 @@ function App() {
     if (json.error != '') {
       //se o acesso for negado, é pego aqui e mostrado na tela.
       alert(json.error)
+    } else {
+      //salva as informacoes para a proxima requisição.
+      localStorage.setItem('token', json.token)
+      localStorage.setItem('username', json.user.name)
+      setToken(json.token)
+      setUserName(json.user.name)
     }
   }
 
@@ -70,9 +82,9 @@ function App() {
         'Content-Type': 'application/json'
       }, // o que será enviado/registrado
       body: JSON.stringify({
-        name: nameField,
-        email: emailField,
-        password: passwordField
+        name: rNameField,
+        email: rEmailField,
+        password: rPasswordField
       })
     })
     let json = await result.json() // pega o resultado
@@ -80,7 +92,21 @@ function App() {
     if (json.error != '') {
       //se o acesso for negado, é pego aqui e mostrado na tela.
       alert(json.error)
+    } else {
+      //salva as informacoes para a proxima requisição.
+      localStorage.setItem('token', json.token)
+      localStorage.setItem('username', json.user.name)
+      setToken(json.token)
+      setUserName(json.user.name)
     }
+  }
+
+  // faz logout do usuário
+  const handleLogout = () => {
+    setToken('')
+    setUserName('')
+    localStorage.setItem('token', '')
+    localStorage.setItem('username', '')
   }
 
   useEffect(() => {
@@ -90,60 +116,70 @@ function App() {
 
   return (
     <div>
-      {/* Formulário de Registro */}
-      <h2>Faça seu Registro:</h2>
-      <form onSubmit={handleRegisterSubmit}>
-        Nome:
-        <input
-          type="text"
-          value={nameField}
-          onChange={e => setNameField(e.target.value)}
-        />
-        <br />
-        Email:
-        <input
-          type="email"
-          value={emailField}
-          onChange={e => setEmailField(e.target.value)}
-        />
-        <br />
-        Senha:
-        <input
-          type="password"
-          value={passwordField}
-          onChange={e => setPasswordField(e.target.value)}
-        />
-        <br />
-        <input type="submit" value="Registrar" />
-      </form>
+      {!token && (
+        <div>
+          {/* Formulário de Registro */}
+          <h2>Faça seu Registro:</h2>
+          <form onSubmit={handleRegisterSubmit}>
+            Nome:
+            <input
+              type="text"
+              value={rNameField}
+              onChange={e => setRNameField(e.target.value)}
+            />
+            <br />
+            Email:
+            <input
+              type="email"
+              value={rEmailField}
+              onChange={e => setREmailField(e.target.value)}
+            />
+            <br />
+            Senha:
+            <input
+              type="password"
+              value={rPasswordField}
+              onChange={e => setRPasswordField(e.target.value)}
+            />
+            <br />
+            <input type="submit" value="Registrar" />
+          </form>
 
-      <hr />
-      <br />
-      {/* Formulário de Login */}
-      <h2>Faça Login:</h2>
-      <form onSubmit={handleLoginSubmit}>
-        <label>
-          E-mail:
-          <input
-            type="email"
-            value={emailField}
-            onChange={e => setEmailField(e.target.value)}
-          />
-        </label>
-        <br />
+          <hr />
+          <br />
+          {/* Formulário de Login */}
+          <h2>Faça Login:</h2>
+          <form onSubmit={handleLoginSubmit}>
+            <label>
+              E-mail:
+              <input
+                type="email"
+                value={emailField}
+                onChange={e => setEmailField(e.target.value)}
+              />
+            </label>
+            <br />
 
-        <label>
-          Senha:
-          <input
-            type="password"
-            value={passwordField}
-            onChange={e => setPasswordField(e.target.value)}
-          />
-        </label>
-        <br />
+            <label>
+              Senha:
+              <input
+                type="password"
+                value={passwordField}
+                onChange={e => setPasswordField(e.target.value)}
+              />
+            </label>
+            <br />
 
-        <input type="submit" value="Enviar" />
-      </form>
+            <input type="submit" value="Enviar" />
+          </form>
+        </div>
+      )}
+      {token && (
+        <div>
+          <h3>Olá, {userName}, seja bem-vindo!</h3>
+          <button onClick={handleLogout}>Sair</button>
+        </div>
+      )}
 
       <h1>Lista de Carros</h1>
       {/* Seleção do Ano do Carro para Pequisa */}
