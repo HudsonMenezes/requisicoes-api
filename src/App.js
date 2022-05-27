@@ -8,6 +8,8 @@ function App() {
   const [emailField, setEmailField] = useState('')
   const [passwordField, setPasswordField] = useState('')
 
+  const [nameField, setNameField] = useState('')
+
   const getCars = async () => {
     setCars([]) // limpa a lista setCars e carrega novamente
     setLoading(true) // quando iniciar a requisição, vai gerar tela de loading
@@ -34,10 +36,10 @@ function App() {
   const handleYearChange = e => {
     setYear(e.target.value) // pega o valor das opções em <option>
   }
-
+  // Formulário de Login
   const handleLoginSubmit = async e => {
     e.preventDefault()
-    // aqui começa o método POST
+    // aqui começa o método POST para login
     let url = 'https://api.b7web.com.br/carros/api/auth/login'
     let result = await fetch(url, {
       method: 'POST',
@@ -57,13 +59,67 @@ function App() {
     }
   }
 
+  // Formulário de Registro
+  const handleRegisterSubmit = async e => {
+    e.preventDefault()
+    //aqui começa o metodo POST para registro
+    let url = 'https://api.b7web.com.br/carros/api/auth/register'
+    let result = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }, // o que será enviado/registrado
+      body: JSON.stringify({
+        name: nameField,
+        email: emailField,
+        password: passwordField
+      })
+    })
+    let json = await result.json() // pega o resultado
+
+    if (json.error != '') {
+      //se o acesso for negado, é pego aqui e mostrado na tela.
+      alert(json.error)
+    }
+  }
+
   useEffect(() => {
-    // ao atualizar a tela, faz a requisição
+    // ao atualizar o ano dos carros, faz a requisição de acordo com o ano
     getCars()
   }, [year])
 
   return (
     <div>
+      {/* Formulário de Registro */}
+      <h2>Faça seu Registro:</h2>
+      <form onSubmit={handleRegisterSubmit}>
+        Nome:
+        <input
+          type="text"
+          value={nameField}
+          onChange={e => setNameField(e.target.value)}
+        />
+        <br />
+        Email:
+        <input
+          type="email"
+          value={emailField}
+          onChange={e => setEmailField(e.target.value)}
+        />
+        <br />
+        Senha:
+        <input
+          type="password"
+          value={passwordField}
+          onChange={e => setPasswordField(e.target.value)}
+        />
+        <br />
+        <input type="submit" value="Registrar" />
+      </form>
+
+      <hr />
+      <br />
+      {/* Formulário de Login */}
       <h2>Faça Login:</h2>
       <form onSubmit={handleLoginSubmit}>
         <label>
@@ -90,7 +146,7 @@ function App() {
       </form>
 
       <h1>Lista de Carros</h1>
-
+      {/* Seleção do Ano do Carro para Pequisa */}
       <select onChange={handleYearChange}>
         <option></option>
         <option>2022</option>
