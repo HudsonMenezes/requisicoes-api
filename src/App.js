@@ -1,9 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import api from './api'
 
 function App() {
   //pegando informacoes para login e armazenando no localstorage
   const [token, setToken] = useState(localStorage.getItem('token'))
   const [userName, setUserName] = useState(localStorage.getItem('username'))
+
+  //adicionar novos carros
+  const [newCarBrand, setNewCarBrand] = useState('')
+  const [newCarName, setNewCarName] = useState('')
+  const [newCarYear, setNewCarYear] = useState('')
+  const [newCarPrice, setNewCarPrice] = useState('')
+  //para pegar o arquivo do upload
+  const photoField = useRef()
 
   const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(false) // valor inicial "false" para a tela de loading
@@ -20,13 +29,16 @@ function App() {
     setCars([]) // limpa a lista setCars e carrega novamente
     setLoading(true) // quando iniciar a requisição, vai gerar tela de loading
 
-    // aqui começa a requisição com Async e Await
+    // ***** REQUISIÇÃO COM AXIOS ******
+    let { data: json } = await api.get(`/carros?ano=${year}`)
+
+    /* // ******REQUISIÇÃO COM FETCH*******
     let result = await fetch(
       `https://api.b7web.com.br/carros/api/carros?ano=${year}`
     )
     let json = await result.json()
     // recebe o 'result' e transforma em json através de .json()
-    // pega a result.json() e atribui a json
+    // pega a result.json() e atribui a json */
 
     setLoading(false) // acabou a requisição, para a tela de loading
 
@@ -45,6 +57,14 @@ function App() {
   // Formulário de Login
   const handleLoginSubmit = async e => {
     e.preventDefault()
+
+    // ***** REQUISIÇÃO COM AXIOS ******
+    let { data: json } = await api.post('/auth/login', {
+      email: emailField,
+      password: passwordField
+    })
+
+    /* ***** REQUISIÇÃO COM FETCH ******
     // aqui começa o método POST para login
     let url = 'https://api.b7web.com.br/carros/api/auth/login'
     let result = await fetch(url, {
@@ -58,6 +78,7 @@ function App() {
       })
     })
     let json = await result.json() // pega o resultado
+    */
 
     if (json.error != '') {
       //se o acesso for negado, é pego aqui e mostrado na tela.
@@ -75,6 +96,15 @@ function App() {
   const handleRegisterSubmit = async e => {
     e.preventDefault()
     //aqui começa o metodo POST para registro
+
+    // ***** REQUISIÇÃO COM AXIOS ******
+    let { data: json } = await api.post('/auth/register', {
+      name: rNameField,
+      email: rEmailField,
+      password: rPasswordField
+    })
+
+    /* ***** REQUISIÇÃO COM FETCH ******
     let url = 'https://api.b7web.com.br/carros/api/auth/register'
     let result = await fetch(url, {
       method: 'POST',
@@ -88,6 +118,7 @@ function App() {
       })
     })
     let json = await result.json() // pega o resultado
+    */
 
     if (json.error != '') {
       //se o acesso for negado, é pego aqui e mostrado na tela.
@@ -107,6 +138,53 @@ function App() {
     setUserName('')
     localStorage.setItem('token', '')
     localStorage.setItem('username', '')
+  }
+
+  //faz o envio das informacoes no registro do carro
+  const handleAddCarSubmit = async e => {
+    e.preventDefault()
+
+    // adiciona as informações que serão enviadas
+    let body = new FormData()
+    body.append('brand', newCarBrand)
+    body.append('name', newCarName)
+    body.append('year', newCarYear)
+    body.append('price', newCarPrice)
+
+    //vai ver se o usuario enviou algum arquivo, e se enviou mais de um, pega o primeiro
+    if (photoField.current.files.length > 0) {
+      body.append('photo', photoField.current.files[0])
+    }
+
+    //aqui começa chamada para enviar o registro de novos carros
+
+    // ***** REQUISIÇÃO COM AXIOS ******
+    api.defaults.headers.Authorization = `Bearer ${token}` // autorização para ser enviada com a requisição
+    let { data: json } = await api.post('/carro', body)
+
+    /* ***** REQUISIÇÃO COM FETCH ******
+    let result = await fetch('https://api.b7web.com.br/carros/api/carro', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body //como não dá pra enviar arquivos dentro de json, é usado o new FormData()
+    })
+
+    let json = await result.json()
+    */
+
+    if (json.error !== '') {
+      alert('Ocorreu um erro!')
+      console.log(json.error)
+    } else {
+      alert('Carro adicionado com Sucesso!')
+      getCars()
+      setNewCarBrand('')
+      setNewCarName('')
+      setNewCarYear('')
+      setNewCarPrice('')
+    }
   }
 
   useEffect(() => {
@@ -175,10 +253,58 @@ function App() {
         </div>
       )}
       {token && (
-        <div>
-          <h3>Olá, {userName}, seja bem-vindo!</h3>
-          <button onClick={handleLogout}>Sair</button>
-        </div>
+        <section>
+          <div>
+            <h3>Olá, {userName}, seja bem-vindo!</h3>
+            <button onClick={handleLogout}>Sair</button>
+          </div>
+
+          <form onSubmit={handleAddCarSubmit}>
+            <h4>Adicionar Carro</h4>
+            <label>
+              Marca do Carro:
+              <input
+                type="text"
+                value={newCarBrand}
+                onChange={e => setNewCarBrand(e.target.value)}
+              />
+            </label>
+            <br />
+            <label>
+              Nome do Carro:
+              <input
+                type="text"
+                value={newCarName}
+                onChange={e => setNewCarName(e.target.value)}
+              />
+            </label>
+            <br />
+            <label>
+              Ano do Carro:
+              <input
+                type="number"
+                value={newCarYear}
+                onChange={e => setNewCarYear(e.target.value)}
+              />
+            </label>
+            <br />
+            <label>
+              Preço do Carro:
+              <input
+                type="number"
+                value={newCarPrice}
+                onChange={e => setNewCarPrice(e.target.value)}
+              />
+            </label>
+            <br />
+            <label>
+              Foto do Carro:
+              <input ref={photoField} type="file" />
+            </label>
+            <br />
+            <input type="submit" value="Adicionar Carro" />
+          </form>
+        </section>
       )}
 
       <h1>Lista de Carros</h1>
